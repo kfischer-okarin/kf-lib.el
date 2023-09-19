@@ -87,6 +87,17 @@
 If TESTFN is non-nil, use it as the test function for `assoc'."
   (cdr (assoc key alist testfn)))
 
+(defmacro kf-lib-set-alist-value (key value alist)
+  "Set the value of KEY in ALIST to VALUE.
+
+If KEY is not present in ALIST, add it to the front."
+  `(let ((existing (assoc ,key ,alist)))
+     (if existing
+         (setcdr existing ,value)
+       (push (cons ,key ,value) ,alist))))
+
+
+
 ;;;;; Private
 
 ;; (defun package-name--bar (args)

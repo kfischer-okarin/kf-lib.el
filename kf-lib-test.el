@@ -31,3 +31,10 @@
 (ert-deftest kf-lib-test-assoc-value-with-testfn ()
   (let ((alist '((1 . 1) (2 . 4) (3 . 9))))
     (should (eq (kf-lib-assoc-value 1 alist #'>) 4))))
+
+(ert-deftest kf-lib-set-alist-value ()
+  (let ((alist '((1 . 1) (2 . 4) (3 . 9))))
+    (kf-lib-set-alist-value 1 2 alist)
+    (should (equal alist '((1 . 2) (2 . 4) (3 . 9))))
+    (kf-lib-set-alist-value 4 16 alist)
+    (should (equal alist '((4 . 16) (1 . 2) (2 . 4) (3 . 9))))))
