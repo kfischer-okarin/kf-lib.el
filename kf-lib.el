@@ -39,10 +39,6 @@
   :group 'convenience
   :link '(url-link "https://github.com/kfischer-okarin/kf-lib.el"))
 
-;; (defcustom package-name-something nil
-;;   "This setting does something."
-;;   :type 'something)
-
 ;;;; Variables
 
 ;; (defvar package-name-var nil
@@ -81,6 +77,8 @@
 
 ;;;;; Public
 
+;;;;;; Data structure helpers
+
 (defun kf-lib-assoc-value (key alist &optional testfn)
   "Return the value of KEY in ALIST.
 
@@ -96,6 +94,36 @@ If KEY is not present in ALIST, add it to the front."
          (setcdr existing ,value)
        (push (cons ,key ,value) ,alist))))
 
+
+;;;;;;; Encrypted Secrets
+
+(defcustom kf-lib-secrets-directory user-emacs-directory
+  "Directory where the encrypted secrets.json containing the secrets is stored."
+  :type 'directory
+  :group 'kf-lib)
+
+(defcustom kf-lib-decrypt-secrets-command "sops -d"
+  "Command to decrypt secrets."
+  :type 'string
+  :group 'kf-lib)
+
+(defun kf-lib-get-secret (key)
+  (let* ((decrypted-output nil)
+         (process (make-process :name "decrypt secrets"
+                                :command (split-string-shell-command
+                                          (concat kf-lib-decrypt-secrets-command " "
+                                                  (shell-quote-argument
+                                                   (expand-file-name "secrets.json" kf-lib-secrets-directory))))
+                                :filter (lambda (process output)
+                                          (if (string-equal output "Enter passphrase: ")
+                                              (process-send-string process
+                                                                   (concat
+                                                                    (read-passwd "Enter passphrase: ")
+                                                                    "\n"))
+                                            (setq decrypted-output (concat decrypted-output output)))))))
+    (while (accept-process-output process))
+    (let ((secrets (json-read-from-string decrypted-output)))
+      (cdr (assoc key secrets)))))
 
 
 ;;;;; Private

@@ -41,3 +41,47 @@
     (should (equal alist '((1 . 2) (2 . 4) (3 . 9))))
     (kf-lib-set-alist-value 4 16 alist)
     (should (equal alist '((4 . 16) (1 . 2) (2 . 4) (3 . 9))))))
+
+
+;;;; Encrypted Secrets
+(let ((script-header "#!/bin/sh\n")
+      (verify-script-argument
+       "if [ \"$1\" != \"/my/secrets/secrets.json\" ]; then\n  echo \"wrong argument '$1'\"\n  exit 1\nfi\n")
+      (print-secret-json "echo \"{\\\"TEST_SECRET\\\": \\\"test secret\\\"}\""))
+  (cl-flet ((expect-passphrase (passphrase)
+              (concat "printf \"Enter passphrase: \"\nread -s passphrase\n"
+                      "if [ \"$passphrase\" != \"" passphrase "\" ]; then\n"
+                      "  echo \"wrong passphrase '$passphrase'\"\n"
+                      "  exit 1\n"
+                      "fi\n"))
+            (prepare-decrypt-script-file (content)
+              (let ((script-file (make-temp-file "test-decrypter" nil ".sh" content)))
+                (set-file-modes script-file #o755)
+                script-file)))
+    (cl-macrolet ((with-decrypt-script-content (content &rest body)
+                    `(let ((kf-lib-secrets-directory "/my/secrets/")
+                           (kf-lib-decrypt-secrets-command (prepare-decrypt-script-file
+                                                            (concat script-header
+                                                                    ,content))))
+                       ,@body))
+                  (with-minibuffer-input (input &rest body)
+                    `(minibuffer-with-setup-hook
+                         (lambda ()
+                           (insert ,input)
+                           (run-with-timer 0 nil
+                                           (lambda ()
+                                             (execute-kbd-macro (kbd "RET")))))
+                       ,@body)))
+
+      (ert-deftest test-kf-lib-get-secret-no-passphrase ()
+        (with-decrypt-script-content (concat verify-script-argument
+                                             print-secret-json)
+                                     (let ((output (kf-lib-get-secret 'TEST_SECRET)))
+                                       (should (equal output "test secret")))))
+
+      (ert-deftest test-kf-lib-get-secret-with-passphrase-success ()
+        (with-decrypt-script-content (concat verify-script-argument
+                                             (expect-passphrase "passphrase")
+                                             print-secret-json)
+                                     (with-minibuffer-input "passphrase"
+                                       (kf-lib-get-secret 'TEST_SECRET)))))))
