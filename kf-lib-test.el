@@ -21,18 +21,21 @@
 
 ;;; Code:
 
-(ert-deftest kf-lib-test-assoc-value ()
+
+;;;; Data structure helpers
+
+(ert-deftest test-kf-lib-assoc-value ()
   (let ((alist '((1 . 1) (2 . 4) (3 . 9))))
     (should (eq (kf-lib-assoc-value 1 alist) 1))
     (should (eq (kf-lib-assoc-value 2 alist) 4))
     (should (eq (kf-lib-assoc-value 3 alist) 9))
     (should (eq (kf-lib-assoc-value 4 alist) nil))))
 
-(ert-deftest kf-lib-test-assoc-value-with-testfn ()
+(ert-deftest test-kf-lib-assoc-value-with-testfn ()
   (let ((alist '((1 . 1) (2 . 4) (3 . 9))))
     (should (eq (kf-lib-assoc-value 1 alist #'>) 4))))
 
-(ert-deftest kf-lib-set-alist-value ()
+(ert-deftest test-kf-lib-set-alist-value ()
   (let ((alist '((1 . 1) (2 . 4) (3 . 9))))
     (kf-lib-set-alist-value 1 2 alist)
     (should (equal alist '((1 . 2) (2 . 4) (3 . 9))))
