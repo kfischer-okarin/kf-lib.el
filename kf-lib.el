@@ -95,6 +95,17 @@ If KEY is not present in ALIST, add it to the front."
        (push (cons ,key ,value) ,alist))))
 
 
+;;;;;;; Emacs Automation
+
+(defmacro kf-lib-with-minibuffer-input (input &rest body)
+  "Execute BODY and use INPUT as the minibuffer input."
+  `(minibuffer-with-setup-hook
+       (lambda ()
+         (insert ,input)
+         (run-with-timer 0 nil
+                         (lambda () (execute-kbd-macro (kbd "RET")))))
+     ,@body))
+
 ;;;;;;; Encrypted Secrets
 
 (defcustom kf-lib-secrets-directory user-emacs-directory

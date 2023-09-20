@@ -43,6 +43,12 @@
     (should (equal alist '((4 . 16) (1 . 2) (2 . 4) (3 . 9))))))
 
 
+;;;; Emacs Automation
+
+(ert-deftest test-kf-lib-with-minibuffer-input ()
+  (kf-lib-with-minibuffer-input "test"
+                                (should (equal (read-string "test") "test"))))
+
 ;;;; Encrypted Secrets
 (let ((script-header "#!/bin/sh\n")
       (verify-script-argument
@@ -63,14 +69,6 @@
                            (kf-lib-decrypt-secrets-command (prepare-decrypt-script-file
                                                             (concat script-header
                                                                     ,content))))
-                       ,@body))
-                  (with-minibuffer-input (input &rest body)
-                    `(minibuffer-with-setup-hook
-                         (lambda ()
-                           (insert ,input)
-                           (run-with-timer 0 nil
-                                           (lambda ()
-                                             (execute-kbd-macro (kbd "RET")))))
                        ,@body)))
 
       (ert-deftest test-kf-lib-get-secret-no-passphrase ()
@@ -83,5 +81,5 @@
         (with-decrypt-script-content (concat verify-script-argument
                                              (expect-passphrase "passphrase")
                                              print-secret-json)
-                                     (with-minibuffer-input "passphrase"
+                                     (kf-lib-with-minibuffer-input "passphrase"
                                        (kf-lib-get-secret 'TEST_SECRET)))))))
