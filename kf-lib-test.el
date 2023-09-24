@@ -82,4 +82,16 @@
                                              (expect-passphrase "passphrase")
                                              print-secret-json)
                                      (kf-lib-with-minibuffer-input "passphrase"
-                                       (kf-lib-get-secret 'TEST_SECRET)))))))
+                                                                   (let ((output (kf-lib-get-secret 'TEST_SECRET)))
+                                                                     (should (equal output "test secret"))))))
+
+      (ert-deftest test-kf-lib-get-secret-with-passphrase-fail ()
+        (with-decrypt-script-content (concat verify-script-argument
+                                             (expect-passphrase "passphrase")
+                                             print-secret-json)
+                                     (kf-lib-with-minibuffer-input "not the passphrase"
+                                                                   (condition-case err
+                                                                       (kf-lib-get-secret 'TEST_SECRET)
+                                                                     ('error
+                                                                      (should (equal (error-message-string err)
+                                                                                     "Incorrect passphrase"))))))))))

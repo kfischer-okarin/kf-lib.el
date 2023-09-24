@@ -120,6 +120,7 @@ If KEY is not present in ALIST, add it to the front."
 
 (defun kf-lib-get-secret (key)
   (let* ((decrypted-output nil)
+         (asked-for-passphrase nil)
          (process (make-process :name "decrypt secrets"
                                 :command (split-string-shell-command
                                           (concat kf-lib-decrypt-secrets-command " "
@@ -127,12 +128,18 @@ If KEY is not present in ALIST, add it to the front."
                                                    (expand-file-name "secrets.json" kf-lib-secrets-directory))))
                                 :filter (lambda (process output)
                                           (if (string-equal output "Enter passphrase: ")
-                                              (process-send-string process
-                                                                   (concat
-                                                                    (read-passwd "Enter passphrase: ")
-                                                                    "\n"))
+                                              (progn
+                                                (setq asked-for-passphrase t)
+                                                (process-send-string process
+                                                                     (concat
+                                                                      (read-passwd "Enter passphrase: ")
+                                                                      "\n")))
                                             (setq decrypted-output (concat decrypted-output output)))))))
     (while (accept-process-output process))
+    (if (not (zerop (process-exit-status process)))
+        (error (if asked-for-passphrase
+                   "Incorrect passphrase"
+                 "Failed to decrypt secrets.json")))
     (let ((secrets (json-read-from-string decrypted-output)))
       (cdr (assoc key secrets)))))
 
