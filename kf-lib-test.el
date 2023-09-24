@@ -68,27 +68,24 @@
                     `(let ((kf-lib-secrets-directory "/my/secrets/")
                            (kf-lib-decrypt-secrets-command (prepare-decrypt-script-file
                                                             (concat script-header
-                                                                    ,content))))
+                                                                    verify-script-argument
+                                                                    ,content
+                                                                    print-secret-json))))
                        ,@body)))
 
       (ert-deftest test-kf-lib-get-secret-no-passphrase ()
-        (with-decrypt-script-content (concat verify-script-argument
-                                             print-secret-json)
+        (with-decrypt-script-content nil
                                      (let ((output (kf-lib-get-secret 'TEST_SECRET)))
                                        (should (equal output "test secret")))))
 
       (ert-deftest test-kf-lib-get-secret-with-passphrase-success ()
-        (with-decrypt-script-content (concat verify-script-argument
-                                             (expect-passphrase "passphrase")
-                                             print-secret-json)
+        (with-decrypt-script-content (expect-passphrase "passphrase")
                                      (kf-lib-with-minibuffer-input "passphrase"
                                                                    (let ((output (kf-lib-get-secret 'TEST_SECRET)))
                                                                      (should (equal output "test secret"))))))
 
       (ert-deftest test-kf-lib-get-secret-with-passphrase-fail ()
-        (with-decrypt-script-content (concat verify-script-argument
-                                             (expect-passphrase "passphrase")
-                                             print-secret-json)
+        (with-decrypt-script-content (expect-passphrase "passphrase")
                                      (kf-lib-with-minibuffer-input "not the passphrase"
                                                                    (condition-case err
                                                                        (kf-lib-get-secret 'TEST_SECRET)
