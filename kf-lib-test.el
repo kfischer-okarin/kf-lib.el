@@ -75,14 +75,14 @@
 
       (ert-deftest test-kf-lib-get-secret-no-passphrase ()
         (with-decrypt-script-content nil
-                                     (let ((output (kf-lib-get-secret 'TEST_SECRET)))
-                                       (should (equal output "test secret")))))
+                                     (let ((result (kf-lib-get-secret 'TEST_SECRET)))
+                                       (should (equal result "test secret")))))
 
       (ert-deftest test-kf-lib-get-secret-with-passphrase-success ()
         (with-decrypt-script-content (expect-passphrase "passphrase")
                                      (kf-lib-with-minibuffer-input "passphrase"
-                                                                   (let ((output (kf-lib-get-secret 'TEST_SECRET)))
-                                                                     (should (equal output "test secret"))))))
+                                                                   (let ((result (kf-lib-get-secret 'TEST_SECRET)))
+                                                                     (should (equal result "test secret"))))))
 
       (ert-deftest test-kf-lib-get-secret-with-passphrase-fail ()
         (with-decrypt-script-content (expect-passphrase "passphrase")
@@ -91,4 +91,18 @@
                                                                        (kf-lib-get-secret 'TEST_SECRET)
                                                                      ('error
                                                                       (should (equal (error-message-string err)
-                                                                                     "Incorrect passphrase"))))))))))
+                                                                                     "Incorrect passphrase")))))))
+
+      (ert-deftest test-kf-lib-get-secret-caches-secrets ()
+        (let ((executed-filename "executed-decryption"))
+          (with-decrypt-script-content (concat "touch " executed-filename "\n")
+                                       (setq kf-lib-cached-secrets nil)
+                                       (unwind-protect
+                                           (progn
+                                             (kf-lib-get-secret 'TEST_SECRET)
+                                             (should (file-exists-p executed-filename))
+                                             (delete-file executed-filename)
+                                             (let ((result (kf-lib-get-secret 'TEST_SECRET)))
+                                               (should (equal result "test secret"))
+                                               (should (not (file-exists-p executed-filename)))))
+                                         (delete-file executed-filename))))))))

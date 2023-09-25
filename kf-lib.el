@@ -118,31 +118,33 @@ If KEY is not present in ALIST, add it to the front."
   :type 'string
   :group 'kf-lib)
 
-(defun kf-lib-get-secret (key)
-  (let* ((decrypted-output nil)
-         (asked-for-passphrase nil)
-         (process (make-process :name "decrypt secrets"
-                                :command (split-string-shell-command
-                                          (concat kf-lib-decrypt-secrets-command " "
-                                                  (shell-quote-argument
-                                                   (expand-file-name "secrets.json" kf-lib-secrets-directory))))
-                                :filter (lambda (process output)
-                                          (if (string-equal output "Enter passphrase: ")
-                                              (progn
-                                                (setq asked-for-passphrase t)
-                                                (process-send-string process
-                                                                     (concat
-                                                                      (read-passwd "Enter passphrase: ")
-                                                                      "\n")))
-                                            (setq decrypted-output (concat decrypted-output output)))))))
-    (while (accept-process-output process))
-    (if (not (zerop (process-exit-status process)))
-        (error (if asked-for-passphrase
-                   "Incorrect passphrase"
-                 "Failed to decrypt secrets.json")))
-    (let ((secrets (json-read-from-string decrypted-output)))
-      (cdr (assoc key secrets)))))
+(setq kf-lib-cached-secrets nil)
 
+(defun kf-lib-get-secret (key)
+  (unless kf-lib-cached-secrets
+    (let* ((decrypted-output nil)
+           (asked-for-passphrase nil)
+           (process (make-process :name "decrypt secrets"
+                                  :command (split-string-shell-command
+                                            (concat kf-lib-decrypt-secrets-command " "
+                                                    (shell-quote-argument
+                                                     (expand-file-name "secrets.json" kf-lib-secrets-directory))))
+                                  :filter (lambda (process output)
+                                            (if (string-equal output "Enter passphrase: ")
+                                                (progn
+                                                  (setq asked-for-passphrase t)
+                                                  (process-send-string process
+                                                                       (concat
+                                                                        (read-passwd "Enter passphrase: ")
+                                                                        "\n")))
+                                              (setq decrypted-output (concat decrypted-output output)))))))
+      (while (accept-process-output process))
+      (if (not (zerop (process-exit-status process)))
+          (error (if asked-for-passphrase
+                     "Incorrect passphrase"
+                   "Failed to decrypt secrets.json")))
+      (setq kf-lib-cached-secrets (json-read-from-string decrypted-output))))
+  (cdr (assoc key kf-lib-cached-secrets)))
 
 ;;;;; Private
 
