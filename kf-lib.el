@@ -121,6 +121,11 @@ If KEY is not present in ALIST, add it to the front."
 (setq kf-lib-cached-secrets nil)
 
 (defun kf-lib-get-secret (key)
+  "Return the secret for KEY from the secrets.json file.
+
+See `kf-lib-secrets-directory' for the location of the secrets.json.
+You can use `kf-lib-decrypt-secrets-command' to customize how the
+secrets are decrypted from the secrets.json"
   (unless kf-lib-cached-secrets
     (let* ((decrypted-output nil)
            (asked-for-passphrase nil)
@@ -145,6 +150,7 @@ If KEY is not present in ALIST, add it to the front."
                    "Failed to decrypt secrets.json")))
       (setq kf-lib-cached-secrets (json-read-from-string decrypted-output))))
   (cdr (assoc key kf-lib-cached-secrets)))
+
 
 ;;;;; Private
 
