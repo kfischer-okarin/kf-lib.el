@@ -164,6 +164,26 @@ secrets are decrypted from the secrets.json"
     (if (re-search-forward (concat "^:" drawer ":$") next-heading-start t)
         (beginning-of-line)
       (error (concat "No drawer " drawer " found")))))
+
+(defun kf-lib-org-go-to-next-logbook-item ()
+  "Go to the next logbook item.
+
+This command recognizes the following logbook item types:
+- CLOCK entry with/without note
+- Note taken via org-add-note
+- TODO state change"
+  (interactive)
+  (let ((current-pos (point))
+        (drawer-end-pos (save-excursion
+                          (re-search-forward "^:END:" nil t)
+                          (point))))
+    ; Go forward one char in case we're on a hyphen/CLOCK already
+    (forward-char)
+    (if (re-search-forward "^\\(- State \"\\|- Note taken on\\|CLOCK\\)" drawer-end-pos t)
+        (beginning-of-line)
+      (progn
+        (goto-char current-pos)
+        (error "On last logbook item")))))
 ;;;;; Private
 
 ;; (defun package-name--bar (args)

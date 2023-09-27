@@ -147,3 +147,36 @@
       ('error
        (should (equal (error-message-string err)
                       "No drawer LOGBOOK found"))))))
+
+(ert-deftest test-kf-lib-org-go-to-next-logbook-item ()
+  (with-temp-buffer
+    (insert ":LOGBOOK:\n"
+            "- Note taken on [2023-09-21 Thu 17:12] \\\\\n"
+            "Some long\n"
+            "multiline\n"
+            "note\n"
+            "CLOCK: [2023-09-20 Wed 13:55]--[2023-09-20 Wed 14:22] =>  0:27\n"
+            "CLOCK: [2023-09-20 Wed 10:55]--[2023-09-20 Wed 11:22] =>  0:27\n"
+            "- Clock note\n"
+            "- State \"TODO\"       from              [2023-09-20 Wed 10:23]\n"
+            ":END:\n"
+            "- non logbook item\n")
+    (goto-char (point-min))
+    (kf-lib-org-go-to-next-logbook-item)
+    (should (eq (line-number-at-pos) 2))
+    (kf-lib-org-go-to-next-logbook-item)
+    (should (eq (line-number-at-pos) 6))
+    (kf-lib-org-go-to-next-logbook-item)
+    (should (eq (line-number-at-pos) 7))
+    (kf-lib-org-go-to-next-logbook-item)
+    (should (eq (line-number-at-pos) 9))
+    (forward-char 10) ; To make sure the exact point is remembered before error
+    (let ((point-before-error (point)))
+      (condition-case err
+          (progn
+            (kf-lib-org-go-to-next-logbook-item)
+            (should nil)) ; Should not be reached
+        ('error
+         (should (equal (error-message-string err)
+                        "On last logbook item"))))
+      (should (eq (point) point-before-error)))))
