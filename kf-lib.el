@@ -152,6 +152,18 @@ secrets are decrypted from the secrets.json"
   (cdr (assoc key kf-lib-cached-secrets)))
 
 
+;;;;;;; Org Mode
+
+(defun kf-lib-org-go-to-drawer (drawer)
+  "Go to DRAWER in the current heading."
+  (interactive "sDrawer: ")
+  (org-back-to-heading)
+  (let ((next-heading-start (save-excursion
+                              (outline-next-heading)
+                              (point))))
+    (if (re-search-forward (concat "^:" drawer ":$") next-heading-start t)
+        (beginning-of-line)
+      (error (concat "No drawer " drawer " found")))))
 ;;;;; Private
 
 ;; (defun package-name--bar (args)

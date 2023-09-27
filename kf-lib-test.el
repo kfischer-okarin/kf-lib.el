@@ -50,6 +50,7 @@
                                 (should (equal (read-string "test") "test"))))
 
 ;;;; Encrypted Secrets
+
 (let ((script-header "#!/bin/sh\n")
       (verify-script-argument
        "if [ \"$1\" != \"/my/secrets/secrets.json\" ]; then\n  echo \"wrong argument '$1'\"\n  exit 1\nfi\n")
@@ -106,3 +107,43 @@
                                                (should (equal result "test secret"))
                                                (should (not (file-exists-p executed-filename)))))
                                          (delete-file executed-filename))))))))
+
+
+;;;; Org Mode
+
+(ert-deftest test-kf-lib-org-go-to-drawer ()
+  (with-temp-buffer
+    (insert "* Headline\n"
+            ":PROPERTIES:\n"
+            ":END:\n"
+            ":LOGBOOK:\n"
+            ":END:\n"
+            "\n"
+            "* Headline without drawer\n"
+            "Some content\n"
+            "\n"
+            "* Other Headline\n"
+            ":PROPERTIES:\n"
+            ":END:\n"
+            ":LOGBOOK:\n"
+            ":END:\n")
+    (goto-char (point-min))
+    (kf-lib-org-go-to-drawer "LOGBOOK")
+    (should (eq (line-number-at-pos) 4))
+    (should (eq (current-column) 0))
+    (goto-char (point-max))
+    (kf-lib-org-go-to-drawer "LOGBOOK")
+    (should (eq (line-number-at-pos) 13))
+    (should (eq (current-column) 0))
+    (goto-line 10) ; Directly on headline
+    (kf-lib-org-go-to-drawer "LOGBOOK")
+    (should (eq (line-number-at-pos) 13))
+    (should (eq (current-column) 0))
+    (goto-line 8) ; Headline without drawer
+    (condition-case err
+        (progn
+          (kf-lib-org-go-to-drawer "LOGBOOK")
+          (should nil)) ; Should not be reached
+      ('error
+       (should (equal (error-message-string err)
+                      "No drawer LOGBOOK found"))))))
