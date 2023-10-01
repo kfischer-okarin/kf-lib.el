@@ -49,6 +49,7 @@
   (kf-lib-with-minibuffer-input "test"
                                 (should (equal (read-string "test") "test"))))
 
+
 ;;;; Encrypted Secrets
 
 (let ((script-header "#!/bin/sh\n")
