@@ -180,3 +180,60 @@
          (should (equal (error-message-string err)
                         "On last logbook item"))))
       (should (eq (point) point-before-error)))))
+
+
+;;;; Execute file
+
+(defvar kf-lib-test-result nil)
+
+(let ((test-command-alist
+          '(("other_project" . '())
+            ("project" . (("\\.py" . (lambda (filename)
+                                       (setq kf-lib-test-result `(python ,filename))))
+                          ("\\.rb" . (lambda (filename)
+                                       (setq kf-lib-test-result `(ruby ,filename))))))
+            ((:type dragonruby) . (("\\.rb" . (lambda (filename)
+                                                 (setq kf-lib-test-result `(dragonruby ,filename))))))
+            (t . (("\\.rb" . (lambda (filename)
+                               (setq kf-lib-test-result `(default-ruby ,filename)))))))))
+
+  (ert-deftest test-kf-lib-execute-file-project-name ()
+    (let* ((kf-lib-execute-file-command-alist test-command-alist)
+           (buffer-file-name "script.rb")
+           (kf-lib-project-type-function (lambda () nil))
+           (kf-lib-project-name-function (lambda () "project"))
+           (kf-lib-test-result nil))
+      (kf-lib-execute-file)
+      (should (equal kf-lib-test-result '(ruby "script.rb")))))
+
+  (ert-deftest test-kf-lib-execute-file-default-commands ()
+    (let* ((kf-lib-execute-file-command-alist test-command-alist)
+           (buffer-file-name "script.rb")
+            (kf-lib-project-type-function (lambda () nil))
+           (kf-lib-project-name-function (lambda () "unknown"))
+           (kf-lib-test-result nil))
+      (kf-lib-execute-file)
+      (should (equal kf-lib-test-result '(default-ruby "script.rb")))))
+
+  (ert-deftest test-kf-lib-execute-file-no-match ()
+    (let* ((kf-lib-execute-file-command-alist test-command-alist)
+           (buffer-file-name "script.py")
+            (kf-lib-project-type-function (lambda () nil))
+           (kf-lib-project-name-function (lambda () "other_project"))
+           (kf-lib-test-result nil))
+      (condition-case err
+          (progn
+            (kf-lib-execute-file)
+            (should nil)) ; Should not be reached
+        ('error
+         (should (string= (error-message-string err)
+                          "Don’t know how to execute file ’script.py’"))))))
+
+  (ert-deftest test-kf-lib-execute-file-project-type ()
+    (let* ((kf-lib-execute-file-command-alist test-command-alist)
+           (buffer-file-name "script.rb")
+           (kf-lib-project-name-function (lambda () "gameproject"))
+           (kf-lib-project-type-function (lambda () 'dragonruby))
+           (kf-lib-test-result nil))
+      (kf-lib-execute-file)
+      (should (equal kf-lib-test-result '(dragonruby "script.rb"))))))

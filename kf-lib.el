@@ -184,6 +184,34 @@ This command recognizes the following logbook item types:
       (progn
         (goto-char current-pos)
         (error "On last logbook item")))))
+
+
+;;;;;;; Execute file
+
+(defcustom kf-lib-execute-file-command-alist nil
+  "Alist of project names to commands to execute the current file.")
+
+(defcustom kf-lib-project-name-function #'projectile-project-name
+  "Function to get the project name from the current buffer.")
+
+(defcustom kf-lib-project-type-function #'projectile-project-type
+  "Function to get the project type from the current buffer.")
+
+(defun kf-lib-execute-file ()
+  "Execute the current file."
+  (interactive)
+  (let* ((project-name (funcall kf-lib-project-name-function))
+         (project-type (funcall kf-lib-project-type-function))
+         (project-execute-command-alist
+          (or (kf-lib-assoc-value project-name kf-lib-execute-file-command-alist)
+              (kf-lib-assoc-value `(:type ,project-type) kf-lib-execute-file-command-alist)
+              (kf-lib-assoc-value t kf-lib-execute-file-command-alist)))
+         (filename (buffer-file-name))
+         (execute-command (kf-lib-assoc-value filename project-execute-command-alist #'string-match-p)))
+    (if execute-command
+        (funcall execute-command filename)
+      (error (concat "Don't know how to execute file '" filename "'")))))
+
 ;;;;; Private
 
 ;; (defun package-name--bar (args)
