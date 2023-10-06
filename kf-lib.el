@@ -209,7 +209,7 @@ This command recognizes the following logbook item types:
          (filename (buffer-file-name))
          (execute-command (kf-lib-assoc-value filename project-execute-command-alist #'string-match-p)))
     (if execute-command
-        (funcall execute-command filename)
+        (funcall execute-command)
       (error (concat "Don't know how to execute file '" filename "'")))))
 
 ;;;;; Private

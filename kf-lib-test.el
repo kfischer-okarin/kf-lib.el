@@ -24,6 +24,11 @@
 
 (defvar kf-lib-test-result nil)
 
+(defmacro kf-lib-test-set-result (result)
+  `(lambda ()
+     (interactive)
+     (setq kf-lib-test-result ,result)))
+
 
 ;;;; Data structure helpers
 
@@ -189,15 +194,11 @@
 ;;;; Execute file
 
 (let ((test-command-alist
-          '(("other_project" . '())
-            ("project" . (("\\.py" . (lambda (filename)
-                                       (setq kf-lib-test-result `(python ,filename))))
-                          ("\\.rb" . (lambda (filename)
-                                       (setq kf-lib-test-result `(ruby ,filename))))))
-            ((:type dragonruby) . (("\\.rb" . (lambda (filename)
-                                                 (setq kf-lib-test-result `(dragonruby ,filename))))))
-            (t . (("\\.rb" . (lambda (filename)
-                               (setq kf-lib-test-result `(default-ruby ,filename)))))))))
+          `(("other_project" . '())
+            ("project" . (("\\.py" . ,(kf-lib-test-set-result 'python))
+                          ("\\.rb" . ,(kf-lib-test-set-result 'ruby))))
+            ((:type dragonruby) . (("\\.rb" . ,(kf-lib-test-set-result 'dragonruby))))
+            (t . (("\\.rb" . ,(kf-lib-test-set-result 'default-ruby)))))))
 
   (ert-deftest test-kf-lib-execute-file-project-name ()
     (let* ((kf-lib-execute-file-command-alist test-command-alist)
@@ -206,7 +207,7 @@
            (kf-lib-project-name-function (lambda () "project"))
            (kf-lib-test-result nil))
       (kf-lib-execute-file)
-      (should (equal kf-lib-test-result '(ruby "script.rb")))))
+      (should (equal kf-lib-test-result 'ruby))))
 
   (ert-deftest test-kf-lib-execute-file-default-commands ()
     (let* ((kf-lib-execute-file-command-alist test-command-alist)
@@ -215,7 +216,7 @@
            (kf-lib-project-name-function (lambda () "unknown"))
            (kf-lib-test-result nil))
       (kf-lib-execute-file)
-      (should (equal kf-lib-test-result '(default-ruby "script.rb")))))
+      (should (equal kf-lib-test-result 'default-ruby))))
 
   (ert-deftest test-kf-lib-execute-file-no-match ()
     (let* ((kf-lib-execute-file-command-alist test-command-alist)
@@ -238,4 +239,4 @@
            (kf-lib-project-type-function (lambda () 'dragonruby))
            (kf-lib-test-result nil))
       (kf-lib-execute-file)
-      (should (equal kf-lib-test-result '(dragonruby "script.rb"))))))
+      (should (equal kf-lib-test-result 'dragonruby)))))
