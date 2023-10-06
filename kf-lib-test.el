@@ -22,6 +22,9 @@
 ;;; Code:
 
 
+(defvar kf-lib-test-result nil)
+
+
 ;;;; Data structure helpers
 
 (ert-deftest test-kf-lib-assoc-value ()
@@ -184,8 +187,6 @@
 
 
 ;;;; Execute file
-
-(defvar kf-lib-test-result nil)
 
 (let ((test-command-alist
           '(("other_project" . '())
