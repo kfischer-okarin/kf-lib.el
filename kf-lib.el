@@ -189,7 +189,7 @@ This command recognizes the following logbook item types:
 ;;;;;;; Execute file
 
 (defcustom kf-lib-execute-file-command-alist nil
-  "Alist of project names to commands to execute the current file.")
+  "Nested alist of project names or types to file name patterns to commands to execute the file.")
 
 (defcustom kf-lib-project-name-function #'projectile-project-name
   "Function to get the project name from the current buffer.")
@@ -208,9 +208,9 @@ This command recognizes the following logbook item types:
               (kf-lib-assoc-value t kf-lib-execute-file-command-alist)))
          (filename (buffer-file-name))
          (execute-command (kf-lib-assoc-value filename project-execute-command-alist #'string-match-p)))
-    (if execute-command
-        (funcall execute-command)
-      (error (concat "Don't know how to execute file '" filename "'")))))
+    (unless execute-command
+      (error (concat "Don't know how to execute file '" filename "'")))
+    (funcall execute-command)))
 
 ;;;;; Private
 
