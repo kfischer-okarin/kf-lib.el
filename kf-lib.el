@@ -212,6 +212,29 @@ This command recognizes the following logbook item types:
       (error (concat "Don't know how to execute file '" filename "'")))
     (funcall execute-command)))
 
+
+;;;;;;; Find related file
+
+(defcustom kf-lib-find-related-file-command-alist nil
+  "Nested alist of project names or types to file name patterns to commands to find the related file.")
+
+(defun kf-lib-find-related-file ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (project-name (funcall kf-lib-project-name-function))
+         (project-type (funcall kf-lib-project-type-function))
+         (project-find-command-alist
+          (or (kf-lib-assoc-value project-name kf-lib-find-related-file-command-alist)
+              (kf-lib-assoc-value `(:type ,project-type) kf-lib-find-related-file-command-alist)))
+         (matching-entry (assoc filename project-find-command-alist #'string-match-p)))
+    (unless matching-entry
+      (error (concat "Don't know how to find related file for '" filename "'")))
+    (let* ((matching-regex (car matching-entry))
+           (find-command (cdr matching-entry))
+           (matches (s-match matching-regex filename)))
+      (find-file (apply find-command matches)))))
+
+
 ;;;;; Private
 
 ;; (defun package-name--bar (args)
