@@ -126,31 +126,36 @@ If KEY is not present in ALIST, add it to the front."
 See `kf-lib-secrets-directory' for the location of the secrets.json.
 You can use `kf-lib-decrypt-secrets-command' to customize how the
 secrets are decrypted from the secrets.json"
-  (unless kf-lib-cached-secrets
-    (let* ((decrypted-output nil)
-           (asked-for-passphrase nil)
-           (process (make-process :name "decrypt secrets"
-                                  :command (split-string-shell-command
-                                            (concat kf-lib-decrypt-secrets-command " "
-                                                    (shell-quote-argument
-                                                     (expand-file-name "secrets.json" kf-lib-secrets-directory))))
-                                  :filter (lambda (process output)
-                                            (if (string-equal output "Enter passphrase: ")
-                                                (progn
-                                                  (setq asked-for-passphrase t)
-                                                  (process-send-string process
-                                                                       (concat
-                                                                        (read-passwd "Enter passphrase: ")
-                                                                        "\n")))
-                                              (setq decrypted-output (concat decrypted-output output)))))))
-      (while (accept-process-output process))
-      (if (not (zerop (process-exit-status process)))
-          (error (if asked-for-passphrase
-                     "Incorrect passphrase"
-                   "Failed to decrypt secrets.json")))
-      (setq kf-lib-cached-secrets (json-read-from-string decrypted-output))))
+  (unless kf-lib-cached-secrets (kf-lib-reload-secrets))
   (cdr (assoc key kf-lib-cached-secrets)))
 
+(defun kf-lib-reload-secrets ()
+  "Reload the secrets from the secrets.json file.
+
+See `kf-lib-get-secret' for more information."
+  (interactive)
+  (let* ((decrypted-output nil)
+         (asked-for-passphrase nil)
+         (process (make-process :name "decrypt secrets"
+                                :command (split-string-shell-command
+                                          (concat kf-lib-decrypt-secrets-command " "
+                                                  (shell-quote-argument
+                                                   (expand-file-name "secrets.json" kf-lib-secrets-directory))))
+                                :filter (lambda (process output)
+                                          (if (string-equal output "Enter passphrase: ")
+                                              (progn
+                                                (setq asked-for-passphrase t)
+                                                (process-send-string process
+                                                                     (concat
+                                                                      (read-passwd "Enter passphrase: ")
+                                                                      "\n")))
+                                            (setq decrypted-output (concat decrypted-output output)))))))
+    (while (accept-process-output process))
+    (if (not (zerop (process-exit-status process)))
+        (error (if asked-for-passphrase
+                   "Incorrect passphrase"
+                 "Failed to decrypt secrets.json")))
+    (setq kf-lib-cached-secrets (json-read-from-string decrypted-output))))
 
 ;;;;;;; Org Mode
 

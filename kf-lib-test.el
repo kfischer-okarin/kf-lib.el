@@ -115,6 +115,18 @@
                                              (let ((result (kf-lib-get-secret 'TEST_SECRET)))
                                                (should (equal result "test secret"))
                                                (should (not (file-exists-p executed-filename)))))
+                                         (delete-file executed-filename)))))
+
+      (ert-deftest test-kf-lib-reload-secrets ()
+        (let ((executed-filename "executed-decryption"))
+          (with-decrypt-script-content (concat "touch " executed-filename "\n")
+                                       (setq kf-lib-cached-secrets '(("TEST_SECRET" . "old secret")))
+                                       (unwind-protect
+                                           (progn
+                                             (kf-lib-reload-secrets)
+                                             (should (file-exists-p executed-filename))
+                                             (let ((result (kf-lib-get-secret 'TEST_SECRET)))
+                                               (should (equal result "test secret"))))
                                          (delete-file executed-filename))))))))
 
 
