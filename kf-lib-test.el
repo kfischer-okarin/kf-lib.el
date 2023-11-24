@@ -202,6 +202,37 @@
                         "On last logbook item"))))
       (should (eq (point) point-before-error)))))
 
+(let ((new-time (encode-time (list 30 12 9 21 11 2023))))
+
+  (ert-deftest test-kf-lib-org-with-current-time-org-time-stamp ()
+    (with-temp-buffer
+      (kf-lib-org-with-current-time new-time
+                                    (org-time-stamp '(16)))
+      (should (equal (buffer-string) "<2023-11-21 Tue 09:12>"))))
+
+  (ert-deftest test-kf-lib-org-with-current-time-close-todo ()
+    (let ((org-todo-keywords '((sequence "TODO" "DONE"))))
+      (with-temp-buffer
+        (org-mode)
+        (insert "* TODO Task\n")
+        (kf-lib-org-with-current-time new-time
+                                      (org-todo "DONE"))
+        (should (equal (buffer-string) (concat "* DONE Task\n"
+                                               "CLOSED: [2023-11-21 Tue 09:12]\n"))))))
+
+  (ert-deftest test-kf-lib-org-with-current-time-repeater ()
+    (with-temp-buffer
+      (org-mode)
+      (insert "* TODO Repeating Task\n"
+              "  DEADLINE: <2023-11-01 Wed .+3d>\n")
+      (kf-lib-org-with-current-time new-time
+                                    (org-todo "DONE"))
+      (should (equal (buffer-string) (concat "* TODO Repeating Task\n"
+                                             "  DEADLINE: <2023-11-24 Fri .+3d>\n"
+                                             "  :PROPERTIES:\n"
+                                             "  :LAST_REPEAT: [2023-11-21 Tue 09:12]\n"
+                                             "  :END:\n"))))))
+
 
 ;;;; Execute file
 

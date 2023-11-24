@@ -190,6 +190,16 @@ This command recognizes the following logbook item types:
         (goto-char current-pos)
         (error "On last logbook item")))))
 
+(defmacro kf-lib-org-with-current-time (time &rest body)
+  "Execute BODY with TIME as the current time."
+  `(cl-letf* (((symbol-function 'current-time) (lambda () ,time))
+              ((symbol-function 'float-time)
+               (lambda (&optional specified-time) (original-float-time (or specified-time (current-time)))))
+              ((symbol-function 'original-time-subtract) (symbol-function 'time-subtract))
+              ((symbol-function 'time-subtract)
+               (lambda (t1 t2) (original-time-subtract (or t1 (current-time)) (or t2 (current-time))))))
+     ,@body))
+
 
 ;;;;;;; Execute file
 
