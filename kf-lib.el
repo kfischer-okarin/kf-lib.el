@@ -218,9 +218,9 @@ This command recognizes the following logbook item types:
   (let* ((project-name (funcall kf-lib-project-name-function))
          (project-type (funcall kf-lib-project-type-function))
          (project-execute-command-alist
-          (or (kf-lib-assoc-value project-name kf-lib-execute-file-command-alist)
-              (kf-lib-assoc-value `(:type ,project-type) kf-lib-execute-file-command-alist)
-              (kf-lib-assoc-value t kf-lib-execute-file-command-alist)))
+          (append (kf-lib-assoc-value project-name kf-lib-execute-file-command-alist)
+                  (kf-lib-assoc-value `(:type ,project-type) kf-lib-execute-file-command-alist)
+                  (kf-lib-assoc-value t kf-lib-execute-file-command-alist)))
          (filename (buffer-file-name))
          (execute-command (kf-lib-assoc-value filename project-execute-command-alist #'string-match-p)))
     (unless execute-command

@@ -282,7 +282,16 @@
            (kf-lib-project-type-function (lambda () 'dragonruby))
            (kf-lib-test-result nil))
       (kf-lib-execute-file)
-      (should (equal kf-lib-test-result 'dragonruby)))))
+      (should (equal kf-lib-test-result 'dragonruby))))
+
+  (ert-deftest test-kf-lib-execute-file-try-next-matching-group ()
+    (let* ((kf-lib-execute-file-command-alist test-command-alist)
+           (buffer-file-name "script.rb")
+           (kf-lib-project-name-function (lambda () "other_project"))
+           (kf-lib-project-type-function (lambda () nil))
+           (kf-lib-test-result nil))
+      (kf-lib-execute-file)
+      (should (equal kf-lib-test-result 'default-ruby)))))
 
 
 ;;;; Find related file
