@@ -299,8 +299,9 @@
        '(("other_project" . '())
          ("project" . (("\\(.+\\)\\.py" . (lambda (filename basename) (concat filename basename "_related.py")))
                        ("\\(.+\\)\\.rb" . (lambda (filename basename) (concat filename basename "_related.rb")))))
-          ((:type dragonruby) . (("\\(.+\\)\\.rb" . (lambda (filename basename)
-                                                      (concat filename basename "_dr_related.rb"))))))))
+         ((:type dragonruby) . (("\\(.+\\)\\.rb" . (lambda (filename basename)
+                                                     (concat filename basename "_dr_related.rb")))))
+         (t . (("\\(.+\\)\\.rb" . (lambda (filename basename) (concat filename basename "_default_related.rb"))))))))
 
   (cl-macrolet
       ((with-mocked-find-file (body)
@@ -339,4 +340,14 @@
                 (kf-lib-project-type-function (lambda () 'dragonruby))
                 (kf-lib-test-result nil))
            (kf-lib-find-related-file)
-           (should (equal kf-lib-test-result "script.rbscript_dr_related.rb")))))))
+           (should (equal kf-lib-test-result "script.rbscript_dr_related.rb")))))
+
+      (ert-deftest test-kf-lib-find-related-file-try-next-matching-group ()
+        (with-mocked-find-file
+         (let* ((kf-lib-find-related-file-command-alist test-command-alist)
+                (buffer-file-name "script.rb")
+                (kf-lib-project-name-function (lambda () "other_project"))
+                (kf-lib-project-type-function (lambda () nil))
+                (kf-lib-test-result nil))
+           (kf-lib-find-related-file)
+           (should (equal kf-lib-test-result "script.rbscript_default_related.rb")))))))
