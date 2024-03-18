@@ -192,7 +192,8 @@ This command recognizes the following logbook item types:
 
 (defmacro kf-lib-org-with-current-time (time &rest body)
   "Execute BODY with TIME as the current time."
-  `(cl-letf* (((symbol-function 'current-time) (lambda () ,time))
+  `(cl-letf* (((symbol-function 'original-float-time) (symbol-function 'float-time))
+              ((symbol-function 'current-time) (lambda () ,time))
               ((symbol-function 'float-time)
                (lambda (&optional specified-time) (original-float-time (or specified-time (current-time)))))
               ((symbol-function 'original-time-subtract) (symbol-function 'time-subtract))
